@@ -9,6 +9,17 @@ public class Main {
         Sort algorithm = new BubbleSort();
 
         int[] array = new int[]{3,5,3,2,5,6,7,9};
+
+        printArray(array);
         algorithm.sort(array);
+        printArray(array);
+    }
+
+    private static void printArray(int[] array) {
+        System.out.print("[");
+        for (int intValue : array) {
+            System.out.print(intValue+" ");
+        }
+        System.out.println("]");
     }
 }
