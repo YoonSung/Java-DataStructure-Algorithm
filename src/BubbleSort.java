@@ -6,11 +6,11 @@ public class BubbleSort implements Sort {
     @Override
     public int[] sort(int[] arr) {
 
-        int size = arr.length - 1;
-        for (int i = size-1; i >= 0; i--) {
-            for (int j = 0; j <= i-1; j++) {
-                if (arr[j] > arr[j+1])
-                    swap(arr, j, j+1);
+        int size = arr.length;
+        for (int i = 0; i < size; ++i) {
+            for (int j = 1; j < size-i; ++j) {
+                if (arr[j-1] > arr[j])
+                    swap(arr, j-1, j);
             }
         }
 
