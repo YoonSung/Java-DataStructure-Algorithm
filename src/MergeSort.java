@@ -18,8 +18,12 @@ public class MergeSort implements Sort {
 
         if (startIndex < lastIndex) {
             int midIndex = startIndex + ((lastIndex - startIndex)/2);
+
+            //divide
             _sort(startIndex, midIndex);
             _sort(midIndex + 1, lastIndex);
+
+            //merge
             merge(startIndex, midIndex, lastIndex);
         }
     }
@@ -28,44 +32,31 @@ public class MergeSort implements Sort {
 
         int leftPointIndex = startIndex;
         int rightPointIndex = midIndex+1;
+
+        //+1 makes that both even and odd is successfully calculated
         int tempArraySize = lastIndex - startIndex+1;
 
+        //create tempArray for ordered merge array
         int[] tempArray = new int[tempArraySize];
         int tempIndex = 0;
 
         while(rightPointIndex <= lastIndex && leftPointIndex <= midIndex) {
 
-            int leftValue = this.array[leftPointIndex];
-            int rightValue = this.array[rightPointIndex];
-
-            if (leftValue < rightValue) {
-                tempArray[tempIndex] = leftValue;
-                leftPointIndex++;
-                tempIndex++;
-
-            } else {
-                tempArray[tempIndex] = rightValue;
-                rightPointIndex++;
-                tempIndex++;
-            }
+            if (this.array[leftPointIndex] < this.array[rightPointIndex])
+                tempArray[tempIndex++] = this.array[leftPointIndex++];
+            else
+                tempArray[tempIndex++] = this.array[rightPointIndex++];
         }
 
-        while(rightPointIndex <= lastIndex) {
-            tempArray[tempIndex] = this.array[rightPointIndex];
 
-            rightPointIndex++;
-            tempIndex++;
-        }
+        //left side values add (if leftPointIndex or rightPointIndex is move to max index, then opposite point must be added
+        while(rightPointIndex <= lastIndex)
+            tempArray[tempIndex++] = this.array[rightPointIndex++];
 
-        while(leftPointIndex <= midIndex) {
-            tempArray[tempIndex] = this.array[leftPointIndex];
+        while(leftPointIndex <= midIndex)
+            tempArray[tempIndex++] = this.array[leftPointIndex++];
 
-            leftPointIndex++;
-            tempIndex++;
-        }
-
-        for (int i = 0; i < tempArraySize; i++) {
+        for (int i = 0; i < tempArraySize; i++)
             this.array[startIndex + i] = tempArray[i];
-        }
     }
 }
