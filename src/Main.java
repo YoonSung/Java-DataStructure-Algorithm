@@ -6,7 +6,7 @@ import java.util.SortedMap;
 public class Main {
 
     public static void main(String[] args) {
-        Sort algorithm = new BubbleSort();
+        Sort algorithm = new SelectionSort();
 
         int[] array = new int[]{3,5,3,2,5,6,7,9};
 
