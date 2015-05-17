@@ -1,3 +1,7 @@
+package architree.sort;
+
+import architree.support.Util;
+
 /**
  * Created by yoon on 15. 4. 30..
  */
@@ -13,7 +17,7 @@ public class SelectionSort implements Sort {
                 if (arr[j] > arr[maxValueIndex])
                     maxValueIndex = j;
             }
-            Util.swap(arr, size-i-1, maxValueIndex);
+            Util.swap(arr, size - i - 1, maxValueIndex);
             maxValueIndex = 0;
         }
 

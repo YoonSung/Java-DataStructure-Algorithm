@@ -1,3 +1,7 @@
+package architree.sort;
+
+import architree.support.Util;
+
 /**
  * Created by yoon on 15. 4. 30..
  */
@@ -26,7 +30,7 @@ public class QuickSort implements Sort {
 
         //Case ordered list, quicksort is ineffient performance.
         //Prevent that, pivot value is choosen randomly
-        Util.swap(this.array, startIndex, startIndex + (lastIndex - startIndex)/2);
+        Util.swap(this.array, startIndex, startIndex + (lastIndex - startIndex) / 2);
 
         int pivotIndex = startIndex;
         int pivotValue = this.array[pivotIndex];
