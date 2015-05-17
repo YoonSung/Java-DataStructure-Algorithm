@@ -5,8 +5,8 @@ package architree.datastructure.stack;
  */
 public class PlainStack implements Stack {
 
-    private final int stackSize;
-    private int[] stackArray;
+    protected int stackSize;
+    protected int[] stackArray;
     private int topIndex;
 
     public PlainStack(int stackSize) {
