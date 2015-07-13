@@ -48,6 +48,13 @@ public class SortTest {
     public void shellSort() { algorithm = new ShellSort(); }
 
     @Test
+    public void radixSort() {
+        unorderedArray = new int[]{50,4,55,10,20,15,60,99,74,0};
+        orderedArray   = new int[]{0,4,10,15,20,50,55,60,74,99};
+        algorithm = new RadixSort();
+    }
+
+    @Test
     public void countingSort() {
         unorderedArray = new int[]{3,3,2,3,1,1,0,0,2,0};
         orderedArray   = new int[]{0,0,0,1,1,2,2,3,3,3};
