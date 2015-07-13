@@ -25,14 +25,13 @@ public class ShellSort implements Sort {
                 temp = arr[outer];
                 inner = outer;
 
-                arr[inner] = temp;
-
                 //insertion sort
                 while (inner >= h && arr[inner - h] >= temp) {
                     arr[inner] = arr[inner - h];
                     inner -= h;
                 }
 
+                arr[inner] = temp;
             }
             h = (h - 1) / 3; // decrease h
         }

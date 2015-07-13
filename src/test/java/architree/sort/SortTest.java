@@ -14,12 +14,13 @@ import static org.junit.Assert.assertTrue;
 public class SortTest {
 
     int[] unorderedArray;
-    int[] orderedArray = new int[]{0,1,2,3,4,5,6,7,8,9};
+    int[] orderedArray;
 
     Sort algorithm;
 
     @Before
     public void setUp() throws Exception {
+        orderedArray = new int[]{0,1,2,3,4,5,6,7,8,9};
         unorderedArray = new int[]{9,8,7,6,5,4,3,2,1,0};
     }
 
@@ -45,6 +46,13 @@ public class SortTest {
 
     @Test
     public void shellSort() { algorithm = new ShellSort(); }
+
+    @Test
+    public void countingSort() {
+        unorderedArray = new int[]{3,3,2,3,1,1,0,0,2,0};
+        orderedArray   = new int[]{0,0,0,1,1,2,2,3,3,3};
+        algorithm = new CountingSort();
+    }
 
     @After
     public void eachTestDo() {
