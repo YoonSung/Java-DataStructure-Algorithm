@@ -6,7 +6,7 @@ import architree.support.Util;
  * Created by yoon on 15. 4. 30..
  */
 public class SelectionSort implements Sort {
-    @Override
+
     public int[] sort(int[] arr) {
 
         int size = arr.length;

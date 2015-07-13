@@ -43,6 +43,9 @@ public class SortTest {
         algorithm = new QuickSort();
     }
 
+    @Test
+    public void shellSort() { algorithm = new ShellSort(); }
+
     @After
     public void eachTestDo() {
         algorithm.sort(unorderedArray);

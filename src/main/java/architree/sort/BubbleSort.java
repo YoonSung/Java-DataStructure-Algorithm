@@ -7,7 +7,6 @@ import architree.support.Util;
  */
 public class BubbleSort implements Sort {
 
-    @Override
     public int[] sort(int[] arr) {
 
         int size = arr.length;

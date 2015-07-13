@@ -8,7 +8,6 @@ public class MergeSort implements Sort {
 
     private int[] array;
 
-    @Override
     public int[] sort(int[] arr) {
         this.array = arr;
         _sort(0, arr.length - 1);
