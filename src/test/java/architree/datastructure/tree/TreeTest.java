@@ -75,22 +75,45 @@ public class TreeTest {
                                                                 :
                                                                 1;
             }
+
+            @Override
+            public String toString() {
+                return "TestElement{" +
+                        "value=" + value +
+                        '}';
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (o == null || getClass() != o.getClass()) return false;
+
+                TestElement that = (TestElement) o;
+
+                return value == that.value;
+
+            }
+
+            @Override
+            public int hashCode() {
+                return value;
+            }
         }
 
         AVLTree tree = new AVLTree();
 
         final int CREATE_ELEMENT_NUMBER = 4000;
         final int BETWEEN_ELEMENT_VALUE_GAP  =   50;
-        for( int i = BETWEEN_ELEMENT_VALUE_GAP; i != 0; i = ( i + BETWEEN_ELEMENT_VALUE_GAP ) % CREATE_ELEMENT_NUMBER )
+        for (int i = BETWEEN_ELEMENT_VALUE_GAP; i != 0; i = ( i + BETWEEN_ELEMENT_VALUE_GAP ) % CREATE_ELEMENT_NUMBER )
             tree.insert( new TestElement( i ) );
 
-        if(((TestElement)(tree.findMin())).getValue() != 1
-            || ((TestElement)(tree.findMax())).getValue() != CREATE_ELEMENT_NUMBER - 1 )
-                System.out.println("Find Error!");
+        if (((TestElement)(tree.findMin())).getValue() != 50
+            || ((TestElement)(tree.findMax())).getValue() != CREATE_ELEMENT_NUMBER - BETWEEN_ELEMENT_VALUE_GAP )
+                fail("Find Error!");
 
-        for (int i = 1 ; i < CREATE_ELEMENT_NUMBER ; i++)
+        for (int i = BETWEEN_ELEMENT_VALUE_GAP; i != 0; i = ( i + BETWEEN_ELEMENT_VALUE_GAP ) % CREATE_ELEMENT_NUMBER )
             if (((TestElement)(tree.find(new TestElement(i)))).getValue() != i)
-                System.out.println("Find Error!");
+                fail("Find Error!");
 
         tree.inOrderTraverseTree();
     }
