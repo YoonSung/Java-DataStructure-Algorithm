@@ -1,5 +1,6 @@
 package architree.datastructure.tree;
 
+import architree.datastructure.tree.avl.AVLTree;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -47,6 +48,49 @@ public class TreeTest {
             temp = (char) (65 +i);
             tree.add(new BNode(keyList.get(i), temp+""));
         }
+
+        tree.inOrderTraverseTree();
+    }
+
+    @Test
+    public void AVLTreeTest() {
+        class TestElement implements Comparable<TestElement> {
+
+            private final int value;
+
+            public TestElement(int value) {
+                this.value = value;
+            }
+
+            public int getValue() {
+                return value;
+            }
+
+            public int compareTo(TestElement o) {
+                return value < o.getValue() ?
+                                            -1
+                                            :
+                                            value == o.getValue() ?
+                                                                0
+                                                                :
+                                                                1;
+            }
+        }
+
+        AVLTree tree = new AVLTree();
+
+        final int CREATE_ELEMENT_NUMBER = 4000;
+        final int BETWEEN_ELEMENT_VALUE_GAP  =   50;
+        for( int i = BETWEEN_ELEMENT_VALUE_GAP; i != 0; i = ( i + BETWEEN_ELEMENT_VALUE_GAP ) % CREATE_ELEMENT_NUMBER )
+            tree.insert( new TestElement( i ) );
+
+        if(((TestElement)(tree.findMin())).getValue() != 1
+            || ((TestElement)(tree.findMax())).getValue() != CREATE_ELEMENT_NUMBER - 1 )
+                System.out.println("Find Error!");
+
+        for (int i = 1 ; i < CREATE_ELEMENT_NUMBER ; i++)
+            if (((TestElement)(tree.find(new TestElement(i)))).getValue() != i)
+                System.out.println("Find Error!");
 
         tree.inOrderTraverseTree();
     }
