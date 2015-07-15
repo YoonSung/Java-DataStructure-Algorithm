@@ -94,7 +94,7 @@ class TTNode<T extends Comparable> {
         return parent;
     }
 
-    public boolean isLeafNode() {
+    public boolean isTerminal() {
         return leftChild == null && rightChild == null;
     }
 
@@ -113,7 +113,7 @@ class TTNode<T extends Comparable> {
         return rightValue;
     }
 
-    private boolean isThreeNode() {
+    public boolean isThreeNode() {
         return !isTwoNode();
     }
 
@@ -122,4 +122,11 @@ class TTNode<T extends Comparable> {
     }
 
 
+    public void setLeftValue(T leftValue) {
+        this.leftValue = leftValue;
+    }
+
+    public void setRightValue(T rightValue) {
+        this.rightValue = rightValue;
+    }
 }

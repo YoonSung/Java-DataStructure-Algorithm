@@ -1,11 +1,96 @@
 package architree.datastructure.tree.twothree;
 
-import javax.xml.soap.Node;
-
 /**
  * Created by yoon on 15. 7. 15..
  */
 public class TwoThreeTree<T extends Comparable> {
+
+    // [START] ------------ Public Method
+    public boolean contains(T value) {
+        return findNode(root, value) != null;
+    }
+
+    public T first() {
+        TTNode<T> node = root;
+        while (node.getLeftChild() != null) {
+            node = node.getLeftChild();
+        }
+        return node.isThreeNode() ? node.getLeftValue() : node.getValue();
+    }
+
+    public T last() {
+        TTNode<T> node = root;
+        while (node.getRightChild() != null) {
+            node = node.getRightChild();
+        }
+        return node.isThreeNode() ? node.getRightValue() : node.getValue();
+    }
+
+    public interface Function<T> {
+        public void apply(T t);
+    }
+
+
+    /**
+     * Preorder search.
+     * Visit the node.
+     * Visit the left subtree
+     * Visit the middle subtree
+     */
+    public void preOrder(TTNode<T> node, Function<T> f) {
+        if (node.isThreeNode()) {
+            f.apply(node.getLeftValue());
+            f.apply(node.getRightValue());
+        }
+        if (node.isTerminal())
+            return;
+
+
+        preOrder(node.getLeftChild(), f);
+        if (node.isThreeNode()) {
+            assert node.getMiddleChild() != null;
+            preOrder(node.getMiddleChild(), f);
+        }
+        preOrder(node.getRightChild(), f);
+    }
+
+
+
+    public  void inorderSearch(TTNode<T> node, Function<T> func) {
+        if (node == null)
+            return;
+        inorderSearch(node.getLeftChild(), func);
+        if (node.isThreeNode()) {
+            TTNode<T> threeNode = node;
+            func.apply(threeNode.getLeftValue());
+            inorderSearch(threeNode.getMiddleChild(), func);
+            func.apply(threeNode.getRightValue());
+        } else {
+            func.apply(node.getValue());
+        }
+        inorderSearch(node.getRightChild(), func);
+    }
+
+
+    @Override
+    public String toString() {
+        if (size == 0)
+            return "[]";
+        final StringBuilder sb = new StringBuilder("[");
+        inorderSearch(root, new Function<T>() {
+            public void apply(T t) {
+                sb.append(t);
+                sb.append(", ");
+            }
+        });
+        sb.deleteCharAt(sb.length() - 1);
+        sb.deleteCharAt(sb.length() - 1);
+        sb.append("]");
+        return sb.toString();
+    }
+    // [END] ------------ Public Method
+
+
 
     enum CompareResult {
         SMALLER_THAN_PARENT,
@@ -18,11 +103,11 @@ public class TwoThreeTree<T extends Comparable> {
     }
 
     private CompareResult getLeftCompareResult(TTNode<T> node, T child) {
-        return getCompareResult(node.getLeftChild(), child);
+        return getCompareResult(node.getLeftValue(), child);
     }
 
     private CompareResult getRightCompareResult(TTNode<T> node, T child) {
-        return getCompareResult(node.getRightChild(), child);
+        return getCompareResult(node.getRightValue(), child);
     }
 
     private CompareResult getCompareResult(T parent, T child) {
@@ -64,7 +149,6 @@ public class TwoThreeTree<T extends Comparable> {
     }
 
     private TTNode<T> insert(T value, TTNode<T> node) throws DuplicateException {
-
         TTNode<T> returnValue = null;
 
         // ------------ parent가 2 node일 경우
@@ -78,7 +162,7 @@ public class TwoThreeTree<T extends Comparable> {
              *    TwoNode(value1) + value2     ->   ThreeNode(value1, value2)
              *
              */
-            if (node.isLeafNode()) {
+            if (node.isTerminal()) {
                 if (type == CompareResult.SAME_AS_PARENT)
                     throw DUPLICATE;
 
@@ -114,8 +198,8 @@ public class TwoThreeTree<T extends Comparable> {
                     if (result != null) {
                         TTNode threeNode = TTNode.createThreeNode(result.getValue(), node.getValue());
                         threeNode.setRightChild(node.getRightChild());
-                        threeNode.setLeftChild(result.getLeftChild());
                         threeNode.setMiddleChild(result.getRightChild());
+                        threeNode.setLeftChild(result.getLeftChild());
 
                         if (node.getParent() != null) {
                             node.getParent().replaceChild(node, threeNode);
@@ -173,7 +257,7 @@ public class TwoThreeTree<T extends Comparable> {
              * 단말노드일 경우,
              * 분할만 수행한다.
              */
-            if (threeNode.isLeafNode()) {
+            if (threeNode.isTerminal()) {
                 returnValue = splitNode(threeNode, value);
 
             /**
@@ -294,7 +378,7 @@ public class TwoThreeTree<T extends Comparable> {
                     if (result != null) {
                         returnValue = splitNode(threeNode, result.getValue());
                         returnValue.getLeftChild().setLeftChild(threeNode.getLeftChild());
-                        returnValue.getLeftChild().setRightChild(threeNode.getRightChild());
+                        returnValue.getLeftChild().setRightChild(threeNode.getMiddleChild());
                         returnValue.getRightChild().setLeftChild(result.getLeftChild());
                         returnValue.getRightChild().setRightChild(result.getRightChild());
                         unlinkNode(threeNode);
@@ -369,4 +453,492 @@ public class TwoThreeTree<T extends Comparable> {
 
         return parent;
     }
+
+    //http://cs.wellesley.edu/~cs230/spring07/2-3-trees.pdf
+    public boolean remove(T value) {
+        if (value == null)
+            return false;
+
+        TTNode<T> node = findNode(root, value);
+        if (node == null)
+            return false;
+
+        HoleNode<T> hole = null;
+        TTNode<T> terminalNode;
+        T holeValue;
+        
+        if (node.isTerminal()) {
+            terminalNode = node;
+            holeValue = value;
+            
+        } else {
+
+            if (node.isThreeNode()) {
+
+                /**
+                 * Replace by predecessor
+                 *
+                 * ex)
+                 *
+                 *                node  <- delete this
+                 *                |
+                 *            node
+                 *            |  \
+                 *        node   node   <- find, replace value
+                 */
+                if (node.getLeftValue().equals(value)) {
+                    TTNode<T> predecessor = predecessor(node, value);
+                    holeValue =  predecessor.isThreeNode() ? predecessor.getRightValue() : predecessor.getValue();
+                    node.setLeftValue(holeValue);
+                    terminalNode = predecessor;
+
+                /**
+                 * Replace by successor
+                 *
+                 * ex)
+                 *
+                 *    delete this -> node
+                 *                       \
+                 *                       node
+                 *                       |   \
+                 *      find this ->   node  node
+                 *
+                 *
+                 * or is terminal node
+                 *
+                 *
+                 * ex)
+                 *
+                 *
+                 *       node     <- find this
+                 *          \
+                 *          node  <- delete this
+                 *
+                 */
+                } else {
+                    TTNode<T> successor = successor(node, value);
+                    holeValue = successor.isThreeNode() ? successor.getLeftValue() : successor.getValue();
+                    node.setRightValue(holeValue);
+                    terminalNode = successor;
+                }
+                
+                
+            } else {
+                TTNode<T> successor = successor(node, value);
+                holeValue = successor.isThreeNode() ? successor.getLeftValue() : successor.getValue();
+                node.setRightValue(holeValue);
+                terminalNode = successor;
+            }
+        }
+        
+        assert terminalNode.isTerminal();
+
+        if (terminalNode.isThreeNode()) {
+            // Easy case. Replace 3-node by 2-node
+            T remainedValue = terminalNode.getLeftValue().equals(holeValue) ? terminalNode.getRightValue() : terminalNode.getLeftValue();
+            TTNode<T> twoNode = TTNode.createTwoNode(remainedValue);
+
+            if (terminalNode.getParent() != null) {
+                terminalNode.getParent().replaceChild(terminalNode, twoNode);
+            } else {
+                root = twoNode;
+            }
+
+        } else {
+            if (terminalNode.getParent() != null) {
+                /**
+                 * To deal with a hole in a terminal 2-node,
+                 * we consider it to be a special hole node that has a single subtree.
+                 *
+                 * For the purposes of calculating heights,
+                 * such a hole node does contribute to the height of the tree.
+                 * This decision allows the the path-length invariant
+                 * to be preserved in trees with holes.
+                 */
+                hole = TTNode.createHoleNode();
+                terminalNode.getParent().replaceChild(terminalNode, hole);
+            } else {
+                root = null;
+            }
+        }
+
+        /**
+         * @see 2-3Tree Deletion : Upward Phase in "http://cs.wellesley.edu/~cs230/spring07/2-3-trees.pdf"
+         */
+        while (hole != null) {
+            /**
+             * Case 1. The hole has a 2-node as parent and 2-node as sibling.
+             *
+             *           2Node(value1)
+             *           |           \                                                3Node(value1, value2)
+             *        Hole         2Node(value2)               ->                    |         |          \
+             *         |            |           \                           2Node(value3)  2Node(value4)  2Node(value5)
+             *     2Node(value3)  2Node(value4)  2Node(value5)
+             */
+            if (hole.getParent().isTwoNode() && hole.getSibling().isTwoNode()) {
+                TTNode<T> parent = hole.getParent();
+                TTNode<T> sibling = hole.getSibling();
+
+                TTNode<T> threeNode = TTNode.createThreeNode(parent.getValue(), sibling.getValue());
+
+                if (parent.getLeftChild() == hole) {
+                    threeNode.setLeftChild(hole.getChild());
+                    threeNode.setMiddleChild(sibling.getLeftChild());
+                    threeNode.setRightChild(sibling.getRightChild());
+
+                } else {
+                    threeNode.setLeftChild(sibling.getLeftChild());
+                    threeNode.setMiddleChild(sibling.getRightChild());
+                    threeNode.setRightChild(hole.getChild());
+                }
+
+
+                if (parent.getParent() == null) {
+                    unlinkNode(hole);
+                    root = threeNode;
+                    hole = null;
+
+                } else {
+                    hole.setChild(threeNode);
+                    parent.getParent().replaceChild(parent, hole);
+                }
+
+                unlinkNode(parent);
+                unlinkNode(sibling);
+            }
+
+            /**
+             * Case 2. The hole has a 2-node as parent and 3-node as sibling.
+             *
+             *           2Node(value1)                                                                       2Node(value2)
+             *           |            \                                                                      |           \
+             *        Hole            3Node(value2,     value3)                 ->                 2Node(value1)         2Node(value3)
+             *         |              |           \           \                                    |          \          |           \
+             *     2Node(value4)  2Node(value5) 2Node(value6)  2Node(value7)             2Node(value4)  2Node(value5) 2Node(value6)  2Node(value7)
+             */
+            else if (hole.getParent().isTwoNode() && hole.getSibling().isThreeNode()) {
+                TTNode<T> parent = hole.getParent();
+                TTNode<T> sibling = hole.getSibling();
+
+                if (parent.getLeftChild() == hole) {
+                    TTNode<T> leftChild = TTNode.createTwoNode(parent.getValue());
+                    TTNode<T> rightChild = TTNode.createTwoNode(sibling.getRightValue());
+
+                    parent.setLeftValue(sibling.getLeftValue());
+                    parent.replaceChild(hole, leftChild);
+                    parent.replaceChild(sibling, rightChild);
+
+                    leftChild.setLeftChild(hole.getChild());
+                    leftChild.setRightChild(sibling.getLeftChild());
+
+                    rightChild.setLeftChild(sibling.getMiddleChild());
+                    rightChild.setRightChild(sibling.getRightChild());
+
+                } else {
+                    TTNode<T> leftChild = TTNode.createTwoNode(sibling.getLeftValue());
+                    TTNode<T> rightChild = TTNode.createTwoNode(parent.getValue());
+
+                    parent.setLeftValue(sibling.getRightValue());
+                    parent.replaceChild(sibling, leftChild);
+                    parent.replaceChild(hole, rightChild);
+
+                    leftChild.setLeftChild(sibling.getLeftChild());
+                    leftChild.setRightChild(sibling.getMiddleChild());
+
+                    rightChild.setLeftChild(sibling.getRightChild());
+                    rightChild.setRightChild(hole.getChild());
+                }
+
+                unlinkNode(hole);
+                unlinkNode(sibling);
+                hole = null;
+
+            /**
+             * Case 3. The hole has a 3-node as parent and 2-node as sibling.
+             *
+             *
+             *    subcase (a) -- @see more in "https://twothreetree.googlecode.com/svn-history/r2/trunk/src/sergey/melderis/twothreetree/TwoThreeTree.java"
+             *
+             *                  3Node(value1, value2)                                                2Node(value2)
+             *                  |         |         \                                                |           \
+             *               Hole     2Node(value3)  2Node(value4)     ->        3Node(value1, value3)         2Node(value4)
+             *               |        |           \                                |        |        \
+             *    2Node(value5)  2Node(value6)    2Node(value7)         2Node(value5)  2Node(value6) 2Node(value7)
+             *
+             *
+             *           or
+             *
+             *
+             *   subcase (b)
+             *
+             *                  3Node(value1, value2)                                                2Node(value1)
+             *                  |         |         \                                                |           \
+             *            2Node(value3)  Hole       2Node(value4)     ->                  2Node(value3)         3Node(value2, value4)
+             *                            |         |           \                                                |        |        \
+             *                    2Node(value5)  2Node(value6)  2Node(value7)                         2Node(value5)  2Node(value6) 2Node(value7)
+             *
+             *
+             */
+            } else if (hole.getParent().isThreeNode()) {
+                TTNode<T> parent = hole.getParent();
+
+                // subcase (a), hole is in the middle
+                // @see https://twothreetree.googlecode.com/svn-history/r2/trunk/src/sergey/melderis/twothreetree/TwoThreeTree.java
+                if (parent.getMiddleChild() == hole && parent.getLeftChild().isTwoNode()) {
+                    TTNode<T> leftChild = parent.getLeftChild();
+                    TTNode<T> newParent = TTNode.createTwoNode(parent.getRightValue());
+                    TTNode<T> newLeftChild = TTNode.createThreeNode(leftChild.getValue(), parent.getLeftValue());
+                    newParent.setLeftChild(newLeftChild);
+                    newParent.setRightChild(parent.getRightChild());
+                    if (parent != root) {
+                        parent.getParent().replaceChild(parent, newParent);
+                    } else {
+                        root = newParent;
+                    }
+
+                    newLeftChild.setLeftChild(leftChild.getLeftChild());
+                    newLeftChild.setMiddleChild(leftChild.getRightChild());
+                    newLeftChild.setRightChild(hole.getChild());
+
+                    unlinkNode(parent);
+                    unlinkNode(leftChild);
+                    unlinkNode(hole);
+                    hole = null;
+
+                    // subcase (b), hole is in the middle
+                } else if (parent.getMiddleChild() == hole && parent.getRightChild().isTwoNode()) {
+                    TTNode<T> rightChild = parent.getRightChild();
+                    TTNode<T> newParent = TTNode.createTwoNode(parent.getLeftValue());
+                    TTNode<T> newRightChild = TTNode.createThreeNode(parent.getRightValue(), rightChild.getValue());
+                    newParent.setLeftChild(parent.getLeftChild());
+                    newParent.setRightChild(newRightChild);
+                    if (parent != root) {
+                        parent.getParent().replaceChild(parent, newParent);
+                    } else {
+                        root = newParent;
+                    }
+                    newRightChild.setLeftChild(hole.getChild());
+                    newRightChild.setMiddleChild(rightChild.getLeftChild());
+                    newRightChild.setRightChild(rightChild.getRightChild());
+                    unlinkNode(parent);
+                    unlinkNode(rightChild);
+                    unlinkNode(hole);
+                    hole = null;
+                } else if (parent.getMiddleChild().isTwoNode()) {
+                    TTNode<T> middleChild = parent.getMiddleChild();
+
+                    // subcase (a). hole is the left child.
+                    if (parent.getLeftChild() == hole) {
+                        TTNode<T> newParent = TTNode.createTwoNode(parent.getRightValue());
+                        TTNode<T> leftChild = TTNode.createThreeNode(parent.getLeftValue(), middleChild.getValue());
+                        newParent.setLeftChild(leftChild);
+                        newParent.setRightChild(parent.getRightChild());
+                        if (parent != root) {
+                            parent.getParent().replaceChild(parent, newParent);
+                        } else {
+                            root = newParent;
+                        }
+
+                        leftChild.setLeftChild(hole.getChild());
+                        leftChild.setMiddleChild(middleChild.getLeftChild());
+                        leftChild.setRightChild(middleChild.getRightChild());
+
+                        unlinkNode(parent);
+                        unlinkNode(hole);
+                        unlinkNode(middleChild);
+                        hole = null;
+
+                        // subcase (a). hole is the right child.
+                    } else if (parent.getRightChild() == hole) {
+                        //System.out.println("Case 3 (a) hole is right child");
+                        TTNode<T> newParent = TTNode.createTwoNode(parent.getLeftValue());
+                        TTNode<T> rightChild = TTNode.createThreeNode(middleChild.getValue(), parent.getRightValue());
+                        newParent.setRightChild(rightChild);
+                        newParent.setLeftChild(parent.getLeftChild());
+                        if (parent != root) {
+                            parent.getParent().replaceChild(parent, newParent);
+                        } else {
+                            root = newParent;
+                        }
+
+                        rightChild.setLeftChild(middleChild.getLeftChild());
+                        rightChild.setMiddleChild(middleChild.getRightChild());
+                        rightChild.setRightChild(hole.getChild());
+
+                        unlinkNode(parent);
+                        unlinkNode(hole);
+                        unlinkNode(middleChild);
+                        hole = null;
+                    }
+
+                /**
+                 * Case 4. The hole has a 3-node as parent and 3-node as sibling.
+                 *    subcase (a) -- @see more in "https://twothreetree.googlecode.com/svn-history/r2/trunk/src/sergey/melderis/twothreetree/TwoThreeTree.java"
+                 *    subcase (b)
+                 */
+                } else if (parent.getMiddleChild().isThreeNode()) {
+                    TTNode<T> middleChild = parent.getMiddleChild();
+                    // subcase (a) hole is the left child
+                    if (hole == parent.getLeftChild()) {
+                        TTNode<T> newLeftChild = TTNode.createTwoNode(parent.getLeftValue());
+                        TTNode<T> newMiddleChild = TTNode.createTwoNode(middleChild.getRightValue());
+                        parent.setLeftValue(middleChild.getLeftValue());
+                        parent.setLeftChild(newLeftChild);
+                        parent.setMiddleChild(newMiddleChild);
+                        newLeftChild.setLeftChild(hole.getChild());
+                        newLeftChild.setRightChild(middleChild.getLeftChild());
+                        newMiddleChild.setLeftChild(middleChild.getMiddleChild());
+                        newMiddleChild.setRightChild(middleChild.getRightChild());
+
+                        unlinkNode(hole);
+                        unlinkNode(middleChild);
+                        hole = null;
+                    }
+                    // subcase (b) hole is the right child
+                    else if (hole == parent.getRightChild()) {
+                        // System.out.println("Case 4 (b) hole is right child");
+                        TTNode<T> newMiddleChild = TTNode.createTwoNode(middleChild.getLeftValue());
+                        TTNode<T> newRightChild = TTNode.createTwoNode(parent.getRightValue());
+                        parent.setRightValue(middleChild.getRightValue());
+                        parent.setMiddleChild(newMiddleChild);
+                        parent.setRightChild(newRightChild);
+                        newMiddleChild.setLeftChild(middleChild.getLeftChild());
+                        newMiddleChild.setRightChild(middleChild.getMiddleChild());
+                        // newMiddleChild.setParent(middleChild.middleChild());
+                        newRightChild.setLeftChild(middleChild.getRightChild());
+                        newRightChild.setRightChild(hole.getChild());
+
+                        unlinkNode(hole);
+                        unlinkNode(middleChild);
+                        hole = null;
+
+                    } else if (hole == parent.getMiddleChild() && parent.getLeftChild().isThreeNode()) {
+                        // System.out.println("Case 4 (a) hole is middle child, left is 3-node");
+                        TTNode<T> leftChild = parent.getLeftChild();
+                        TTNode<T> newLeftChild = TTNode.createTwoNode(leftChild.getLeftValue());
+                        TTNode<T> newMiddleChild = TTNode.createTwoNode(parent.getLeftValue());
+                        parent.setLeftValue(leftChild.getRightValue());
+                        parent.setLeftChild(newLeftChild);
+                        parent.setMiddleChild(newMiddleChild);
+                        newLeftChild.setLeftChild(leftChild.getLeftChild());
+                        newLeftChild.setRightChild(leftChild.getMiddleChild());
+                        newMiddleChild.setLeftChild(leftChild.getRightChild());
+                        newMiddleChild.setRightChild(hole.getChild());
+
+                        unlinkNode(hole);
+                        unlinkNode(leftChild);
+                        hole = null;
+                    } else {
+                        assert (hole == parent.getMiddleChild() && parent.getRightChild().isThreeNode());
+                        // System.out.println("Case 4 (b) hole is middle child, right is 3-node");
+                        TTNode<T> rightChild = parent.getRightChild();
+                        TTNode<T> newRightChild = TTNode.createTwoNode(rightChild.getRightValue());
+                        TTNode<T> newMiddleChild = TTNode.createTwoNode(parent.getRightValue());
+                        parent.setRightValue(rightChild.getLeftValue());
+                        parent.setMiddleChild(newMiddleChild);
+                        parent.setRightChild(newRightChild);
+                        newRightChild.setRightChild(rightChild.getRightChild());
+                        newRightChild.setLeftChild(rightChild.getMiddleChild());
+                        newMiddleChild.setRightChild(rightChild.getLeftChild());
+                        newMiddleChild.setLeftChild(hole.getChild());
+
+                        unlinkNode(hole);
+                        unlinkNode(rightChild);
+                        hole = null;
+                    }
+                }
+            }
+        }
+
+        size--;
+        return true;
+    }
+
+    private TTNode<T> successor(TTNode<T> node, T value) {
+        if (node == null)
+            return null;
+
+        if (!node.isTerminal()) {
+            TTNode<T> successor;
+            if (node.isThreeNode() && node.getLeftValue().equals(value))
+                successor = node.getMiddleChild();
+            else
+                successor = node.getRightChild();
+
+            while (successor.getLeftChild() != null)
+                successor = successor.getLeftChild();
+
+            return successor;
+        } else {
+            TTNode<T> parent = node.getParent();
+
+            if (parent == null)
+                return null;
+
+            TTNode<T> child = node;
+            while (parent != null && child == parent.getRightChild()) {
+                child = parent;
+                parent = parent.getParent();
+            }
+
+            return parent != null ? parent : null;
+        }
+    }
+
+    private TTNode<T> predecessor(TTNode<T> node, T value) {
+        if (node == null)
+            return null;
+
+        TTNode<T> predecessor;
+
+        if (!node.isTerminal()) {
+            if (node.isThreeNode() && node.getRightValue().equals(value))
+                predecessor = node.getMiddleChild();
+            else
+                predecessor = node.getLeftChild();
+
+            while (predecessor.getRightChild() != null)
+                predecessor = predecessor.getRightChild();
+
+            return predecessor;
+        } else {
+            throw new UnsupportedOperationException("Implement predecessor parent is not terminal node");
+        }
+    }
+
+    private TTNode<T> findNode(TTNode<T> node, T value) {
+        if (node == null)
+            return null;
+
+        // 3 Node
+        if (node.isThreeNode()) {
+            CompareResult leftType = getLeftCompareResult(node, value);
+            CompareResult rightType = getRightCompareResult(node, value);
+
+            if (leftType == CompareResult.SAME_AS_PARENT || rightType == CompareResult.SAME_AS_PARENT) {
+                return node;
+            }
+
+            if (leftType == CompareResult.SMALLER_THAN_PARENT)
+                return findNode(node.getLeftChild(), value);
+
+            else if (rightType == CompareResult.SMALLER_THAN_PARENT)
+                return findNode(node.getMiddleChild(), value);
+            //Greater than Parent
+            else
+                return findNode(node.getRightChild(), value);
+
+        // 2 Node
+        } else {
+            CompareResult type = getCompareResult(node, value);
+
+            if (type == CompareResult.SAME_AS_PARENT)
+                return node;
+            else if (type == CompareResult.SMALLER_THAN_PARENT)
+                return findNode(node.getLeftChild(), value);
+            else
+                return findNode(node.getRightChild(), value);
+        }
+    }
 }
+//@see more https://twothreetree.googlecode.com/svn-history/r2/trunk/src/sergey/melderis/twothreetree/TwoThreeTree.java

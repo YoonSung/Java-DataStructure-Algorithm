@@ -1,11 +1,13 @@
 package architree.datastructure.tree;
 
 import architree.datastructure.tree.avl.AVLTree;
+import architree.datastructure.tree.twothree.TwoThreeTree;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Random;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 
 /**
@@ -116,5 +118,23 @@ public class TreeTest {
                 fail("Find Error!");
 
         tree.inOrderTraverseTree();
+    }
+
+    @Test
+    public void TwoThreeTree() {
+        TwoThreeTree tree =  new TwoThreeTree<Integer>();
+
+        final int MAX = 30;
+
+        for (int i = 1 ; i <= MAX ; i++) {
+            tree.add(i);
+
+        }
+
+        for (int i = 1 ; i <= MAX ; i++) {
+            assertTrue(tree.contains(i));
+            assertTrue(tree.remove(i));
+            assertFalse(tree.contains(i));
+        }
     }
 }
